@@ -142,7 +142,7 @@ def DiffCommands(filename):
     return diff_obj, formatted_commands
 
 
-diffs, formatted_commands = DiffCommands('diff_3.txt')
+diffs, formatted_commands = DiffCommands('diff_1.txt')
 # for i in obj:
 #     print(i)
 
@@ -157,6 +157,9 @@ def OriginalNewFiles(filename_1, filename_2):
     print(blocks_are_identical(formatted_commands, file1, file2))
     print('minimal edit distance: ', minimal_edit_distance(file1, file2))
     print('total cost from diff: ', total_cost(formatted_commands))
+    print(formatted_commands)
+
+    ####################################################################################
     # print(formatted_commands)
     # for i, command in enumerate(formatted_commands):
     #     print(diffs[i])
@@ -180,6 +183,46 @@ def OriginalNewFiles(filename_1, filename_2):
     #         output_end_r = command[4]
     #         for line in file2[output_start_r:output_end_r]:
     #             print('>', line)
+    ###################################################################################
+    # output_unmodified_from_original
+    ranges = []
+    for command in formatted_commands:
+        if 'd' in command:
+            for i in range(command[0], command[1]):
+                ranges.append(i)
+        if 'c' in command:
+            for i in range(command[0], command[1]):
+                ranges.append(i)
+
+    common_line = True
+    for i, line in enumerate(file1):
+        if i in ranges and common_line == True:
+            common_line = False
+            print('...')
+        if i not in ranges:
+            common_line = True
+            print(line)
+    # output_unmodified_from_new
+    ranges = []
+    for command in formatted_commands:
+        if 'a' in command:
+            for i in range(command[3], command[4]):
+                ranges.append(i)
+        if 'c' in command:
+            for i in range(command[3], command[4]):
+                ranges.append(i)
+
+    common_line = True
+    for i, line in enumerate(file2):
+        if i in ranges and common_line == True:
+            common_line = False
+            print('...')
+        if i not in ranges:
+            common_line = True
+            print(line)
+    ###############################################################################
+
+
 
 
 
@@ -276,7 +319,7 @@ def total_cost(formatted_commands):
 
     return cost
 
-OriginalNewFiles('file_3_1.txt', 'file_3_2.txt')
+OriginalNewFiles('file_1_1.txt', 'file_1_2.txt')
 
 # def output_diff(formatted_commands):
 #     formatted_commands
