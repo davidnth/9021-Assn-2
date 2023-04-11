@@ -1,0 +1,14 @@
+00   01 A<     0 A 1 =     0 0 A 0 1
+12   22 D>     2 D 2 =     1 2 D 2 2
+34   34 C      3 4 C 3 4 = 3 4 C 3 4
+55   56 A      5 A 5 6 =   5 5 A 5 6     
+67   77 D>     7 D X  =    6 7 D 7 7
+
+
+Check: There is always a non zero difference between commands on both the left and right side. 
+If blocks are the same on both sides, there should be an equal difference in steps on both sides.
+
+To check if a diff can be the diff for 2 files:
+   Check B1 on left and right files have the same NUMBER of lines and the same lines.
+   Before files are given, we can only check if blocks have the same number of lines. 
+   With the files, we can check if the blocks have the SAME LINES. 
