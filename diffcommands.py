@@ -158,7 +158,16 @@ def OriginalNewFiles(filename_1, filename_2):
     print('minimal edit distance: ', minimal_edit_distance(file1, file2))
     print('total cost from diff: ', total_cost(formatted_commands))
     print(formatted_commands)
-
+    nbr_common_lines = lcs(file1, file2)
+    print('LCS: ', nbr_common_lines)
+    file1_alterations, file2_alterations = 0, 0
+    for command in formatted_commands:
+        file1_alterations += command[1] - command[0]
+        file2_alterations += command[4] - command[3]
+    if len(file1) - file1_alterations != nbr_common_lines or len(file2) - file2_alterations != nbr_common_lines:
+        print('Does not add up')
+    else:
+        print('LCS (unchanged lines) + total lines changed = total file size')
     ####################################################################################
     # print(formatted_commands)
     # for i, command in enumerate(formatted_commands):
@@ -184,47 +193,43 @@ def OriginalNewFiles(filename_1, filename_2):
     #         for line in file2[output_start_r:output_end_r]:
     #             print('>', line)
     ###################################################################################
-    # output_unmodified_from_original
-    ranges = []
-    for command in formatted_commands:
-        if 'd' in command:
-            for i in range(command[0], command[1]):
-                ranges.append(i)
-        if 'c' in command:
-            for i in range(command[0], command[1]):
-                ranges.append(i)
-
-    common_line = True
-    for i, line in enumerate(file1):
-        if i in ranges and common_line == True:
-            common_line = False
-            print('...')
-        if i not in ranges:
-            common_line = True
-            print(line)
-    # output_unmodified_from_new
-    ranges = []
-    for command in formatted_commands:
-        if 'a' in command:
-            for i in range(command[3], command[4]):
-                ranges.append(i)
-        if 'c' in command:
-            for i in range(command[3], command[4]):
-                ranges.append(i)
-
-    common_line = True
-    for i, line in enumerate(file2):
-        if i in ranges and common_line == True:
-            common_line = False
-            print('...')
-        if i not in ranges:
-            common_line = True
-            print(line)
+    # output_unmodified_from_original########################################################
+    # ranges = []
+    # for command in formatted_commands:
+    #     if 'd' in command:
+    #         for i in range(command[0], command[1]):
+    #             ranges.append(i)
+    #     if 'c' in command:
+    #         for i in range(command[0], command[1]):
+    #             ranges.append(i)
+    #
+    # common_line = True
+    # for i, line in enumerate(file1):
+    #     if i in ranges and common_line == True:
+    #         common_line = False
+    #         print('...')
+    #     if i not in ranges:
+    #         common_line = True
+    #         print(line)
+    # output_unmodified_from_new############################################################
+    # ranges = []
+    # for command in formatted_commands:
+    #     if 'a' in command:
+    #         for i in range(command[3], command[4]):
+    #             ranges.append(i)
+    #     if 'c' in command:
+    #         for i in range(command[3], command[4]):
+    #             ranges.append(i)
+    #
+    # common_line = True
+    # for i, line in enumerate(file2):
+    #     if i in ranges and common_line == True:
+    #         common_line = False
+    #         print('...')
+    #     if i not in ranges:
+    #         common_line = True
+    #         print(line)
     ###############################################################################
-
-
-
-
 
 def blocks_are_identical(formatted_commands, file1, file2):
     # Find positions of blocks in files
@@ -249,27 +254,6 @@ def blocks_are_identical(formatted_commands, file1, file2):
             return False
 
     return True
-
-# def minimal_edit_distance(file1, file2):
-#     target = [line for line in file2]
-#     source = [line for line in file1]
-#
-#     # initialise distance
-#     distance = [[0 for column in range(len(file2) + 1)] for row in range(len(file1) + 1)]
-#     for index, row in enumerate(distance):
-#         row[0] = index
-#     distance[0] = [i for i in range(len(file2) + 1)]
-#
-#     for r in range(1, len(file1) + 1):
-#         for c in range(1, len(file2) + 1):
-#             if file2[c - 1] == file1[r - 1]:
-#                 distance[r][c] = distance[r-1][c-1]
-#             else:
-#                 distance[r][c] = min(distance[r][c-1], distance[r-1][c]) + 1
-#
-#     for row in distance:
-#         print(row)
-
 
 def minimal_edit_distance(file1, file2):
     print(file1)
@@ -301,10 +285,33 @@ def minimal_edit_distance(file1, file2):
             distance[i][j] = min_cost, [operation for operation in d if d[operation] == min_cost]
 
     # return bottom right corner
-    # for row in distance:
-    #     print(row)
+    for row in distance:
+        print(row)
     min_operations = distance[len_f1 - 1][len_f2 - 1][0]
+    print(min_operations)
     return min_operations
+
+def lcs(file1, file2):
+    nbr_rows = len(file1) + 1
+    nbr_cols = len(file2) + 1
+    table = [[(0, []) for _ in range(nbr_cols)] for _ in range(nbr_rows)]
+
+    d = {}
+    for i in range(1, nbr_rows):
+        for j in range(1, nbr_cols):
+            if file1[i-1] == file2[j-1]:
+                d["\\"] = table[i - 1][j - 1][0] + 1
+            else:
+                d['<<'] = table[i][j - 1][0]
+                d['^^'] = table[i - 1][j][0]
+
+            max_subsequence = max(d.values())
+            table[i][j] = (max_subsequence, [key for key in d.keys() if d[key] == max_subsequence])
+    # for row in table:
+    #     print(row)
+    lcs = table[nbr_rows - 1][nbr_cols - 1][0]
+    return lcs
+
 
 def total_cost(formatted_commands):
     cost = 0
@@ -320,6 +327,3 @@ def total_cost(formatted_commands):
     return cost
 
 OriginalNewFiles('file_1_1.txt', 'file_1_2.txt')
-
-# def output_diff(formatted_commands):
-#     formatted_commands
