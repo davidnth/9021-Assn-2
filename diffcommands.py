@@ -13,21 +13,21 @@ def valid_d(line):
     if not search:
         return False
     left_range = search.groups()
+    print(left_range)
     if left_range[0] and left_range[1] and int(left_range[1]) <= int(left_range[0]):
         return False
 
     return True
-
 
 def valid_a(line):
     search = re.search('^\d+a(\d+)(?:,(\d+))?$', line)
     if not search:
         return False
     right_range = search.groups()
+    print(right_range)
     if right_range[0] and right_range[1] and int(right_range[1]) <= int(right_range[0]):
         return False
     return True
-
 
 def valid_c(line):
     search = re.search('^(\d+)(?:,(\d+))?c(\d+)(?:,(\d+))?$', line)
@@ -94,14 +94,9 @@ def format_command(line, arr):
 def valid_sequence(formatted_commands):
     for i in range(len(formatted_commands)):
         if i == 0:
-            # If deleting a starting block, make sure right side is at position 0
-            # if 'd' in formatted_commands[i]:
-            #     if formatted_commands[i][3:] != (0, 0):
-            #         return False
-            # continue
             if not (formatted_commands[i][0] >= 0 and formatted_commands[i][3] >= 0 and\
             formatted_commands[i][0] == formatted_commands[i][3]):
-                print('invalid first command')
+                #print('invalid first command')
                 return False
             continue
 
@@ -109,12 +104,12 @@ def valid_sequence(formatted_commands):
             # of previous command on both sides
         if not (formatted_commands[i][0] > formatted_commands[i-1][1] and\
                 formatted_commands[i][3] > formatted_commands[i-1][4]):
-            print('sequence ranges overlap')
+            #print('sequence ranges overlap')
             return False
 
         if not (formatted_commands[i][0] - formatted_commands[i-1][1] ==\
                 formatted_commands[i][3] - formatted_commands[i-1][4]):
-            print('different block size')
+            #print('different block size')
             return False
 
     return True
@@ -143,6 +138,7 @@ def DiffCommands(filename):
 
 
 diffs, formatted_commands = DiffCommands('diff_1.txt')
+print('d',diffs)
 # for i in obj:
 #     print(i)
 
@@ -158,7 +154,8 @@ def OriginalNewFiles(filename_1, filename_2):
     print('minimal edit distance: ', minimal_edit_distance(file1, file2))
     print('total cost from diff: ', total_cost(formatted_commands))
     print(formatted_commands)
-    nbr_common_lines = lcs(file1, file2)
+    lcs_table = lcs(file1, file2)
+    nbr_common_lines = lcs_table[len(file1)][len(file2)][0]
     print('LCS: ', nbr_common_lines)
     file1_alterations, file2_alterations = 0, 0
     for command in formatted_commands:
@@ -168,8 +165,35 @@ def OriginalNewFiles(filename_1, filename_2):
         print('Does not add up')
     else:
         print('LCS (unchanged lines) + total lines changed = total file size')
+
+    back_traces = [[column[1] for column in row] for row in lcs_table]
+    for row in back_traces:
+        print(*row)
+    def find_common_lines(i, j):
+        if i == 1 or j == 1:
+            yield [], []
+        if '\\' in back_traces[i][j]:
+            for pair in find_common_lines(i - 1, j - 1):
+                print(pair)
+                if file1[i] == file2[j]:
+                    pair[0].append(i)
+                    pair[1].append(j)
+                    yield(pair[0], pair[1])
+
+        if '<<' in back_traces[i][j]:
+            find_common_lines(i, j - 1)
+            # for pair in find_common_lines(i, j - 1):
+            #     if file1[i] == file2[j]:
+            #         return pair[0].append(i), pair[1].append(j)
+        if '^^' in back_traces[i][j]:
+            find_common_lines(i - 1, j)
+            # for pair in find_common_lines(i - 1, j):
+            #     if file1[i] == file2[j]:
+            #         return pair[0].append(i), pair[1].append(j)
+    print(list(find_common_lines(len(file1), len(file2))))
+    # print(list(find_common_lines(len(file1), len(file2))))
     ####################################################################################
-    # print(formatted_commands)
+    # output_diff
     # for i, command in enumerate(formatted_commands):
     #     print(diffs[i])
     #     if 'a' in command:
@@ -230,6 +254,7 @@ def OriginalNewFiles(filename_1, filename_2):
     #         common_line = True
     #         print(line)
     ###############################################################################
+
 
 def blocks_are_identical(formatted_commands, file1, file2):
     # Find positions of blocks in files
@@ -298,6 +323,11 @@ def lcs(file1, file2):
 
     d = {}
     for i in range(1, nbr_rows):
+        table[i][0] = 0, []
+    for j in range(1, nbr_cols):
+        table[0][j] = 0, []
+
+    for i in range(1, nbr_rows):
         for j in range(1, nbr_cols):
             if file1[i-1] == file2[j-1]:
                 d["\\"] = table[i - 1][j - 1][0] + 1
@@ -307,10 +337,10 @@ def lcs(file1, file2):
 
             max_subsequence = max(d.values())
             table[i][j] = (max_subsequence, [key for key in d.keys() if d[key] == max_subsequence])
+
     # for row in table:
     #     print(row)
-    lcs = table[nbr_rows - 1][nbr_cols - 1][0]
-    return lcs
+    return table
 
 
 def total_cost(formatted_commands):
